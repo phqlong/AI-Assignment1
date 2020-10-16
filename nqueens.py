@@ -1,138 +1,167 @@
 import random
 import numpy as np
+import time
 
 
 class NQueens:
     def __init__(self, n):
-        self.board, self.queenPositions = self.getNewBoard(n)
-        self.n = n
+        self.queenPositions = self.getNewBoard(n)
+        self.N = n
 
     def getNewBoard(self, n):
-        # queens are represented as ones in 2d list of all zeros
-        # Since it's a 2d list, each element is a row of zeros except for the queen
-        board = []
-        queensPos = []
-
-        # makes n x n board of zeros
-        for x in range(n):
-            board.append([0]*n)
-
         # sets a random value of each row to be 1, denoting the queen
-        for x in range(n):
-            randomIndex = random.randint(0, n-1)
-            board[x][randomIndex] = 1
-            queensPos.append((x, randomIndex))
-
-        return (board, queensPos)
+        queensPos = random.sample(range(0, n), n)
+        # queensPos = [-1]*n
+        return queensPos
 
     # returns true if problem is solved and all queens safe, false otherwise
     def isAllQueensSafe(self):
-        for pos in self.queenPositions:
-            if(self.isUnderAttack(pos)):
+        for row in range(self.N):
+            if(self.isUnderAttack((row, self.queenPositions[row]))):
                 return False
         return True
 
     # check if pos has a queen, then return true if queen is under attack
     def isUnderAttack(self, pos):
-        for queen in self.queenPositions:
-            # last inqueality checks to make sure you arent comparing the same queen
-            if (queen == pos):
+        # checks to make sure given position is a queen
+        # assert queenCol == self.queenPositions[queenRow]
+
+        queenRow, queenCol = pos
+        for otherQueenRow in range(self.N):
+            # checks not comparing the same queen
+            if (otherQueenRow == queenRow):
                 continue
 
-            # attack via Collumn
-            if (pos[1] == queen[1]):
-                return True
+            otherQueenCol = self.queenPositions[otherQueenRow]
+            if(otherQueenCol == -1):
+                continue
 
             # attack via Row
-            if (pos[0] == queen[0]):
+            if (queenRow == otherQueenRow):
+                return True
+
+            # attack via Collumn
+            if (queenCol == otherQueenCol):
                 return True
 
             # attack via Diagonal
-            if (abs(queen[0] - pos[0]) == abs(queen[1] - pos[1])):
+            if (abs(queenRow - otherQueenRow) == abs(queenCol - otherQueenCol)):
                 return True
 
         return False
 
-    # returns number of pieces attacking queen at position pos
+    # check if pos has a queen, then returns number of conflicts with that queen
     def numQueenConflicts(self, pos):
         # checks to make sure given position is a queen
-        assert pos in self.queenPositions
+        # assert queenCol == self.queenPositions[queenRow]
+        queenRow, queenCol = pos
         count = 0
-        for queen in self.queenPositions:
-            if (queen == pos):
+
+        for otherQueenRow in range(self.N):
+            # checks not comparing the same queen
+            if (otherQueenRow == queenRow):
                 continue
 
-            if (abs(queen[0] - pos[0]) == abs(queen[1] - pos[1])):
+            otherQueenCol = self.queenPositions[otherQueenRow]
+
+            # attack via Row
+            if (queenRow == otherQueenRow):
                 count += 1
 
-            if (pos[0] == queen[0]):
+            # attack via Collumn
+            if (queenCol == otherQueenCol):
                 count += 1
 
-            if (pos[1] == queen[1]):
+            # attack via Diagonal
+            if (abs(queenRow - otherQueenRow) == abs(queenCol - otherQueenCol)):
                 count += 1
 
         return count
 
-    # returns position of random queen
+    # returns position: (row, col) of arbitary queen from the board
     def pickRandomQueen(self):
-        newIndex = random.randint(0, self.n - 1)
-        return self.queenPositions[newIndex]
+        randomRow = random.randint(0, self.N - 1)
+        return (randomRow, self.queenPositions[randomRow])
 
     # prints out all positions of queens
+    def printQueensPos(self):
+        for row in range(self.N):
+            print((row, self.queenPositions[row]))
+
+    # prints out the board
     def printBoard(self):
-        for queen in self.queenPositions:
-            print(queen)
+        for row in range(self.N):
+            for col in range(self.N):
+                if self.queenPositions[row] == col:
+                    print('Q ', end=''),
+                else:
+                    print('. ', end=''),
+            print()
 
-    # moves queen from startpos to endpos
-    def moveQueen(self, startPos, endPos):
-        # assert fail if the start position does not have a queen
-        assert self.board[startPos[0]][startPos[1]] == 1
+    # max_N = 21 => recursion
+    def NQueens_DFS(self, row):
+        while row < self.N:
+            col = self.queenPositions[row] + 1
+            # print((row, col))
 
-        self.board[startPos[0]][startPos[1]] = 0
-        self.board[endPos[0]][endPos[1]] = 1
-        self.queenPositions.remove(startPos)
-        self.queenPositions.append(endPos)
+            while col < self.N:
+                # check if this col is underAttack
+                if self.isUnderAttack((row, col)):
+                    # next col
+                    col = col + 1
+                else:
+                    # this (row, col) is safe
+                    self.queenPositions[row] = col
+                    row = row + 1
+                    break
 
-    def availablePositions(self, pos):
-        # returns list of tuples with all positions queen can go
-        availablePos = []
-        for x in range(self.n):
-            availablePos.append((pos[0], x))
+            # Backtracking
+            # All col in this row has visited
+            # => backtrack to row-1
+            if col == self.N:
+                self.queenPositions[row] = -1
+                # return self.NQueens_DFS(row - 1)
+                row = row - 1
 
-        return availablePos
+        # Goal
+        if row == self.N:
+            print('Finished!')
+            return True
 
+    def NQueens_min_conflicts(self):
+        # min conflicts solver for NQueens problems
 
-def NQueens_min_conflicts(n):
-    # min conflicts solver for NQueens problems
+        while(not self.isAllQueensSafe()):
+            pickedQueen = self.pickRandomQueen()
 
-    NQ = NQueens(n)
-    # timer = 0
-    while(not NQ.isAllQueensSafe()):
-        # n + 1 is greater than any possibility of attacks so this is guaranteed to get minimized
-        minAttacks = n + 1
-        pickedQueen = NQ.pickRandomQueen()
+            # n+1 is greater than any possibility of attacks so this is guaranteed to get minimized
+            minAttacks = self.N + 1
+            minConflictCol = -1
 
-        positions = NQ.availablePositions(pickedQueen)
-        minConflictPosition = (-1, -1)
+            # iterate through all positions of pickedQueen and move to position of minimum conflict
+            for newCol in range(self.N):
+                # move queen to newCol
+                self.queenPositions[pickedQueen[0]] = newCol
 
-        # iterate through all positions of pickedQueen and move to position of minimum conflict
-        for pos in positions:
-            NQ.moveQueen(pickedQueen, pos)
+                numConflicts = self.numQueenConflicts((pickedQueen[0], newCol))
+                if(numConflicts < minAttacks):
+                    minConflictCol = newCol
+                    minAttacks = numConflicts
 
-            newNumberOfConflicts = NQ.numQueenConflicts(pos)
-            if(newNumberOfConflicts < minAttacks):
-                minConflictPosition = pos
-                minAttacks = newNumberOfConflicts
+                # move queen back
+                self.queenPositions[pickedQueen[0]] = pickedQueen[1]
 
-            NQ.moveQueen(pos, pickedQueen)  # move queen back
-
-        # move queen to least conflict spot
-        NQ.moveQueen(pickedQueen, minConflictPosition)
-
-    print(NQ.printBoard())
-    board = np.array(NQ.board)
-    print(board)
+            # move queen to least conflict spot
+            self.queenPositions[pickedQueen[0]] = minConflictCol
 
 
 if __name__ == "__main__":
-    NQueens_min_conflicts(8)
+    start_time = time.time()
+
+    NQ = NQueens(40)
+    NQ.NQueens_DFS(0)
+    # NQ.NQueens_min_conflicts()
+
+    # NQ.printQueensPos()
+    NQ.printBoard()
+    print("--- %s seconds ---" % (time.time() - start_time))
