@@ -5,14 +5,42 @@ import time
 
 class NQueens:
     def __init__(self, n):
-        self.queenPositions = self.getNewBoard(n)
-        self.N = n
+        self.N = 0
+        self.queenPositions = []
+        self.getNewBoard(n)
 
     def getNewBoard(self, n):
         # sets a random value of each row to be 1, denoting the queen
-        queensPos = random.sample(range(0, n), n)
+        # queensPos = random.sample(range(0, self.N), self.N
         # queensPos = [-1]*n
-        return queensPos
+
+        # This def wil append ideal col in each queenPosition[row]
+        for row in range(n):
+
+            # Initilize min conflicts in a row is max: N + 1
+            # Candidate list saves collumns have min_conflict
+            min_conflict = self.N + 1
+            candidates = []
+
+            # Firstly, start with col = 0 in each row
+            self.queenPositions.append(0)
+            self.N = self.N + 1
+
+            # Finds collumns have min_conflict and adds them to the candidates
+            for col in range(n):
+                self.queenPositions[row] = col
+                numConflicts = self.numQueenConflicts(
+                    (row, self.queenPositions[row]))
+
+                if numConflicts == min_conflict:
+                    candidates.append(col)
+                elif numConflicts < min_conflict:
+                    candidates = []
+                    candidates.append(col)
+                    min_conflict = numConflicts
+
+            # Selects a random col from candidates which have min_conflict
+            self.queenPositions[row] = random.choice(candidates)
 
     # returns true if problem is solved and all queens safe, false otherwise
     def isAllQueensSafe(self):
@@ -98,8 +126,11 @@ class NQueens:
                     print('. ', end=''),
             print()
 
-    # max_N = 21 => recursion
-    def NQueens_DFS(self, row):
+    # Test N = 40 => Min_time = 5s - Avg_time = 20s - Max_time > 1 min
+    def NQueens_DFS(self):
+        numMoves = 0
+
+        row = 0
         while row < self.N:
             col = self.queenPositions[row] + 1
             # print((row, col))
@@ -123,45 +154,59 @@ class NQueens:
                 # return self.NQueens_DFS(row - 1)
                 row = row - 1
 
+            numMoves += 1
+
         # Goal
         if row == self.N:
             print('Finished!')
-            return True
+        
+        return numMoves
 
     def NQueens_min_conflicts(self):
         # min conflicts solver for NQueens problems
+        numMoves = 0
 
-        while(not self.isAllQueensSafe()):
-            pickedQueen = self.pickRandomQueen()
+        while not self.isAllQueensSafe():
+            row, col = self.pickRandomQueen()
 
-            # n+1 is greater than any possibility of attacks so this is guaranteed to get minimized
-            minAttacks = self.N + 1
-            minConflictCol = -1
+            # Check if picked queen is safe
+            if not self.isUnderAttack((row, col)):
+                continue
 
-            # iterate through all positions of pickedQueen and move to position of minimum conflict
+            # Initilize min conflicts in a row is max: N + 1
+            # Candidate list saves collumns have min_conflict
+            min_conflict = self.N + 1
+            candidates = []
+
+            # Finds collumns have min_conflict and adds them to the candidates
             for newCol in range(self.N):
-                # move queen to newCol
-                self.queenPositions[pickedQueen[0]] = newCol
+                self.queenPositions[row] = newCol
+                numConflicts = self.numQueenConflicts((row, self.queenPositions[row]))
 
-                numConflicts = self.numQueenConflicts((pickedQueen[0], newCol))
-                if(numConflicts < minAttacks):
-                    minConflictCol = newCol
-                    minAttacks = numConflicts
+                if numConflicts == min_conflict:
+                    candidates.append(newCol)
+                elif numConflicts < min_conflict:
+                    candidates = []
+                    candidates.append(newCol)
+                    min_conflict = numConflicts
 
-                # move queen back
-                self.queenPositions[pickedQueen[0]] = pickedQueen[1]
+            # Selects a random col from candidates which have min_conflict
+            self.queenPositions[row] = random.choice(candidates)
 
-            # move queen to least conflict spot
-            self.queenPositions[pickedQueen[0]] = minConflictCol
+            numMoves += 1
+        
+        return numMoves
 
 
 if __name__ == "__main__":
     start_time = time.time()
 
-    NQ = NQueens(40)
-    NQ.NQueens_DFS(0)
-    # NQ.NQueens_min_conflicts()
+    NQ = NQueens(100)
+    # NQ.printBoard()
 
-    # NQ.printQueensPos()
-    NQ.printBoard()
-    print("--- %s seconds ---" % (time.time() - start_time))
+    # numMoves = NQ.NQueens_DFS()
+    numMoves = NQ.NQueens_min_conflicts()
+
+    NQ.printQueensPos()
+    # NQ.printBoard()
+    print("--- %s moves -- %s seconds ---" %(numMoves, (time.time() - start_time)))
