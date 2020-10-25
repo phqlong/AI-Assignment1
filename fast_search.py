@@ -296,7 +296,7 @@ if __name__ == "__main__":
     q = NQueens(N)
 
     start_time = time.time()
-    q.queen_fast_search(q.straight_sol)
+    q.queen_fast_search()
 
     q.hasSol()
     end_time = time.time()
