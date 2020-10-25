@@ -36,7 +36,6 @@ class NQueens:
 
     def diagminusviolate(self, queenPos, N):
         diag = [0] * (2*N - 1)
-        conflict = []
         for i in range(len(queenPos)):
             diag[queenPos[i][0] - queenPos[i][1]] += 1
             if diag[queenPos[i][0] - queenPos[i][1]] > 1:
