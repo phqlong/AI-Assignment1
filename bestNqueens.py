@@ -19,7 +19,6 @@
 
 import random
 import time
-from itertools import combinations
 
 
 class NQueens:
@@ -171,6 +170,17 @@ class NQueens:
     Fast search algorithm (similar to hill climbing)     
     for N = 100.000 in 7 -> 15 minutes, belongs to configuration of processor   
     Plz stay calm and our algorithm won't let you down!!! :D
+
+    The main ideas is to generate random queens with different row and col,
+    this is done by keep the row number ascending, while shuffle the column number.
+
+    Our task is to check collisions between queens via two diagonal slopes.
+
+    If there are collisions, swap the queen involved with some random queen and check the result, 
+    if the swap makes number of collisions smaller, then swap them by their column, 
+    but if the swap is not good, then dont swap but choose another candidate queen for swapping.
+
+    The procedure is finished if there is no collision detected (collision = 0).
     '''
 
     def calcCollision(self, queencol, dp, dn):
@@ -281,37 +291,62 @@ class NQueens:
             # Initialize random queen collumn as a sample list
             queencol = random.sample(range(0, self.N), self.N)
 
+            # Initiate arrays that stores number of queen in diagonal lines
             dp = [0] * (self.N * 2 - 1)
             dn = [0] * (self.N * 2 - 1)
+            # Initiate array stores conflicting queen for faster performance
             atk = [0] * self.N
 
+            # Check collision for the initial array and update to dp, dn
+            # If there is no collision, then it is a solution, we should return it
             collision = self.calcCollision(queencol, dp, dn)
             if collision == 0:
                 break
 
+            # The limit for collision number, if it is smaller than the limit
+            # then update the num_of_attack field to shorten the loop below.
             limit = C1 * collision
+
+            # Check the number of queen conflicting with others 
+            # and store them in atk array
             num_of_atk = self.calcAttack(queencol, dp, dn, atk)
             loopcount = 0
 
+            # Main loop for searching for solution
             while loopcount <= C2 * self.N:
 
                 for k in range(num_of_atk):
+
+                    # Choose a candidate conflicting queen 
+                    # and its swapping partner
                     i = atk[k]
                     j = random.choice(range(self.N))
-                    # print(i, j)
 
+                    # Check the swapping process, 
+                    # if it makes the collision smaller
+                    # then do the swapping
                     if self.isSwapOK(i, j, queencol, dp, dn):
                         collision = self.makeSwap(i, j, queencol, dp, dn)
 
+                        # If the requirement is achieved, 
+                        # then save the state to queenPosSol
+                        # and return
                         if collision == 0:
                             self.queenPosSol = list(
                                 zip(range(self.N), queencol))
                             return
+
+                        # If the collision is smaller than the limit
+                        # update the limit and the attacking queens
+                        # to shorten the loop and make it faster
                         elif collision < limit:
                             limit = C1 * collision
                             num_of_atk = self.calcAttack(
                                 queencol, dp, dn, atk)
 
+                # If the loopcount is too big, 
+                # then the initial randomize state is not good enough
+                # we should start randomize it again
                 loopcount = loopcount + num_of_atk
 
         self.queenPosSol = list(zip(range(self.N), queencol))
