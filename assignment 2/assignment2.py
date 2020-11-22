@@ -1,73 +1,110 @@
 # Them cac thu vien neu can
-import numpy as np
-from itertools import combinations, permutations
+import random
+import time
 
-def readinput(filename):
-    with open(filename, 'r') as fi:
-        rawgarage = [int(i) for i in fi.readline().split()]
-        numworkers, numpackets = [int(i) for i in fi.readline().split()]
-        rawpackets = []
-        for _ in range(numpackets):
-            rawpackets.append([int(i) for i in fi.readline().split()])
+##################  Utility ###################
 
-        garage = np.array(rawgarage)
-    return garage, numworkers, numpackets, rawpackets
+# Calculate distance using Euclid distance
+def calculate_distance(track):
+    def distance(x, y): return ((y[0] - x[0])**2 + (y[1] - x[1])**2) ** 0.5
+    return sum([distance(track[i], track[i+1]) for i in range(len(track)-1)])
 
-def preprocessing(rawpackets):
-    packets = np.array([np.array([i, j, 5 + k + l * 2]) for i, j, k, l in rawpackets])
-    return packets
 
-def f(packets, garage):
-    if len(packets) == 0:
-        return 0
-    income = sum(packets[:,2])
+##################  Class Delivery ###################
 
-    len2 = lambda x, y: np.sqrt((x[0] - y[0])**2 + (x[1] - y[1])**2)
-    move = np.concatenate([np.array([garage]), packets[:, :2]])
+class Delivery():
+    STOCK_LOCATION = ()
 
-    length = sum([len2(move[i], move[i + 1]) for i in range(len(packets))])
-    outcome = length * 10 / 20 + 10
-    return income - outcome
+    NUM_STAFF = 0
+    STAFF = []
 
-def minfunction(garage, workerassignment, packets):
-    summing = np.array([])
-    for i in workerassignment:
-        summing = np.append(summing, np.array(f(np.array([packets[j] for j in i]), garage)))
+    NUM_ORDER = 0
+    ORDER = []
 
-    minf = 0
-    print(summing)
-    for i, j in combinations(summing, 2):
-            minf += abs(i - j)
-    return minf
+    def __init__(self, file_input, file_output):
+        self.read_input(file_input)
+        self.file_output = file_output
+
+    def read_input(self, file_input):
+        with open("./" + file_input, 'r') as input:
+            data = input.read().split('\n')
+
+            self.STOCK_LOCATION = tuple(float(i) for i in data[0].split(' '))
+            self.NUM_STAFF, self.NUM_ORDER = (
+                int(i) for i in data[1].split(' '))
+
+            for row in data[2:]:
+                row = [float(i) for i in row.split(' ')]
+                self.ORDER.append({
+                    'location': (row[0], row[1]),
+                    'volume':   row[2],
+                    'weight':   row[3],
+                    'cost':     5 + row[2] + 2*row[3]})
+
+    def write_output(self):
+        pass
+
+    def assign_order(self):
+        self.STAFF = self.random_generate()
+        # self.STAFF = self.genetic_algorithm()
+        
+        self.evaluate_staff(self.STAFF)
+
+        import pprint
+        pprint.pprint(self.STAFF)
+
+        min_diff = self.profit_diff_function(self.STAFF)
+        print("Sum of profit different = " + str(min_diff))
+
+    def evaluate_staff(self, staff_list):
+        for staff in staff_list:
+            # calculate each staff income
+            order_idx_list = staff['order']
+            staff['income'] = sum([self.ORDER[i]['cost'] for i in order_idx_list])
+
+            # calculate each staff road
+            track = [self.ORDER[i]['location'] for i in order_idx_list]
+            staff['road'] = calculate_distance([self.STOCK_LOCATION] + track)
+
+            # calculate each staff cost
+            staff['cost'] = staff['road']*20/40 + 10
+
+            # calculate each staff profit
+            staff['profit'] = staff['income'] - staff['cost']
+
+    def profit_diff_function(self, staff_list):
+        return sum([abs(x['profit'] - y['profit']) for x in staff_list for y in staff_list])/2
+
+    def random_generate(self):
+        order = list(range(self.NUM_ORDER))
+        random.shuffle(order)
+        staff_list = []
+
+        for i in range(1, self.NUM_STAFF + 1):
+            if i == self.NUM_STAFF:
+                staff_list.append({'order': order})
+                break
+
+            num = random.randrange(1, len(order) - (self.NUM_STAFF - i) + 1)
+            staff_list.append({'order': order[:num]})
+            order = order[num:]
+
+        return staff_list
+
+    def genetic_algorithm(self):
+        pass
+
 
 def assign(file_input, file_output):
     # read input
-    garage, numworkers, numpackets, rawpackets = readinput("input.txt")
-    packets = preprocessing(rawpackets)
-    print(packets)
-    
-    for i in permutations()
-    wass = [[1],
-            []]
-    # for i in range(numworkers * numpackets):
-    #     a = [[], []]
-    #     for j in range(numpackets):
-    #         for k in range(numworkers):
-    #             a[k].append(j)
+    delivery = Delivery(file_input, file_output)
 
-    #     wass.append(a) 
-
-    m = minfunction(garage, wass, packets)
-    print(m)
-
-    # m = minfunction(garage, workerassignment, packets)
-    # print(m)
     # run algorithm
-
-
+    delivery.assign_order()
 
     # write output
-    return
+    delivery.write_output()
 
 
-assign('input.txt', 'output.txt')
+if __name__ == "__main__":
+    assign('input.txt', 'output.txt')
