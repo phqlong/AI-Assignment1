@@ -9,5 +9,7 @@ Goal: Complete an algorithm which can find a solution for N = 100.000 within 5 m
 Constraint Vehicle Routing Problem - CVRP
     
 Algorithm using:
+  
   Artificial bee colony algorithm 
-  Steepest-Ascent Hill Climbing (Gradient Search) AlgorithmQueens Puzzle. 
+  
+  Steepest-Ascent Hill Climbing (Gradient Search)
