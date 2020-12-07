@@ -39,7 +39,7 @@ class Delivery():
             self.NUM_STAFF, self.NUM_ORDER = (
                 int(i) for i in data[1].split(' '))
 
-            for row in data[2:]:
+            for row in data[2: self.NUM_ORDER + 2]:
                 row = [float(i) for i in row.split(' ')]
                 self.ORDER.append({
                     'location': (row[0], row[1]),
@@ -56,13 +56,13 @@ class Delivery():
 
     def assign_order(self):
         if self.NUM_ORDER <= 50:
-            print("Using ABC Algorithm")
+            print("Using ABC Algorithm ...")
             self.STAFF = self.solve_ABC(150, 100, 300)
-        elif self.NUM_ORDER <= 200:
-            print("Using ABC Algorithm")
-            self.STAFF = self.solve_ABC(150, 100, 400)
+        elif self.NUM_ORDER <= 150:
+            print("Using ABC Algorithm ...")
+            self.STAFF = self.solve_ABC(150, 150, 400)
         elif self.NUM_ORDER <= 300:
-            print("Using Steepest-Ascent Hill Climbing Algorithm  => 20 times")
+            print("Using Steepest-Ascent Hill Climbing Algorithm  => 20 times ...")
             best_sol = None
             best_delta = 100000
             for _ in range(20):
@@ -75,7 +75,7 @@ class Delivery():
 
             self.STAFF = best_sol
         elif self.NUM_ORDER <= 500:
-            print("Using Steepest-Ascent Hill Climbing Algorithm  => 5 times")
+            print("Using Steepest-Ascent Hill Climbing Algorithm  => 5 times ...")
             best_sol = None
             best_delta = 100000
             for _ in range(5):
@@ -88,7 +88,7 @@ class Delivery():
 
             self.STAFF = best_sol
         else:
-            print("Using Steepest-Ascent Hill Climbing (Gradient Search) Algorithm")
+            print("Using Steepest-Ascent Hill Climbing (Gradient Search) Algorithm ...")
             self.STAFF = self.solve_hill_climbing()
 
         min_diff = self.min_function(self.STAFF)
@@ -97,7 +97,7 @@ class Delivery():
         # pprint.pprint(self.STAFF)
 
         print("----------------------------------")
-        print("Min delta = " + str(min_diff))
+        print("Min delta = fmax - fmin = " + str(min_diff))
         profit = [i['profit'] for i in self.STAFF]
         min_sum = sum([abs(x - y) for x in profit for y in profit])/2
         print("Min sum = " + str(min_sum))
@@ -186,7 +186,7 @@ class Delivery():
                 if current_fitness < best_fitness:
                     best_fitness = current_fitness
                     best_sol = solutions[i]
-                if counters[i] == search_limit//2:
+                if counters[i] == search_limit:
                     solutions[i] = self.random_generate()
                     counters[i] = 0
 
@@ -210,7 +210,7 @@ class Delivery():
         best_sol = deepcopy(sol)
 
         while True:
-            # print(self.min_function(sol))
+            # print(best_delta)
             sol = self.climb_neighbor_sol(sol)
             if sol is None:
                 break
@@ -328,3 +328,4 @@ def assign(file_input, file_output):
 
 if __name__ == "__main__":
     assign('input.txt', 'output.txt')
+
